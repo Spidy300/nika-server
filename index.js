@@ -8,12 +8,13 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 
 // --- PROVIDER SETUP ---
-// We are switching to SFlix because DramaCool is blocking requests.
-const provider = new MOVIES.SFlix(); 
+// SFlix failed to play video, so we are switching to Goku.
+// Goku is in your "available_movies" list and is very stable.
+const provider = new MOVIES.Goku(); 
 
 app.get('/', (req, res) => {
     res.json({ 
-        message: "Nika API is Online (Powered by SFlix) 🟢", 
+        message: "Nika API is Online (Powered by Goku) 🟢", 
         url: "https://nika-server-1.onrender.com" 
     });
 });
