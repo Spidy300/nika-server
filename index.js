@@ -7,46 +7,36 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-// --- 1. PROVIDER SETUP ---
-// We found out your server has "DramaCool" (Capital C)
-let dramaProvider;
-
-try {
-    // Exact spelling from your "available_movies" list
-    dramaProvider = new MOVIES.DramaCool(); 
-    console.log("✅ Successfully loaded: DramaCool");
-} catch (e) {
-    console.log("⚠️ DramaCool failed, trying FlixHQ as backup.");
-    dramaProvider = new MOVIES.FlixHQ();
-}
+// --- PROVIDER SETUP ---
+// We are switching to SFlix because DramaCool is blocking requests.
+const provider = new MOVIES.SFlix(); 
 
 app.get('/', (req, res) => {
     res.json({ 
-        message: "Nika Drama API is Online 🟢", 
-        provider: "DramaCool", 
+        message: "Nika API is Online (Powered by SFlix) 🟢", 
         url: "https://nika-server-1.onrender.com" 
     });
 });
 
-// --- 2. ROUTES ---
+// --- ROUTES ---
 
 app.get('/drama/search/:query', async (req, res) => {
     try {
-        const results = await dramaProvider.search(req.params.query);
+        const results = await provider.search(req.params.query);
         res.json(results);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/drama/info/:id', async (req, res) => {
     try {
-        const info = await dramaProvider.fetchMediaInfo(req.params.id);
+        const info = await provider.fetchMediaInfo(req.params.id);
         res.json(info);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/drama/watch/:episodeId', async (req, res) => {
     try {
-        const sources = await dramaProvider.fetchEpisodeSources(req.params.episodeId);
+        const sources = await provider.fetchEpisodeSources(req.params.episodeId);
         res.json(sources);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
