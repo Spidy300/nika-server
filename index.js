@@ -7,14 +7,12 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-// --- PROVIDER SETUP ---
-// SFlix failed to play video, so we are switching to Goku.
-// Goku is in your "available_movies" list and is very stable.
-const provider = new MOVIES.Goku(); 
+// Use FlixHQ (Best stability, no 403 Errors)
+const provider = new MOVIES.FlixHQ(); 
 
 app.get('/', (req, res) => {
     res.json({ 
-        message: "Nika API is Online (Powered by Goku) 🟢", 
+        message: "Nika API is Online (Powered by FlixHQ) 🟢", 
         url: "https://nika-server-1.onrender.com" 
     });
 });
