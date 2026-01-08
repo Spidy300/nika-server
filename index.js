@@ -10,41 +10,41 @@ app.use(cors());
 // --- 1. PROVIDER SETUP ---
 const providers = {};
 
-try {
-    // FORCE-FIX: We manually set the domain to one that works
-    const dramacool = new MOVIES.DramaCool();
-    // This overrides the old broken link in the library
-    dramacool.baseUrl = "https://asianc.sh"; 
-    providers['dramacool'] = dramacool;
-    console.log("✅ Loaded: DramaCool (Patched)");
-} catch (e) { console.log("❌ DramaCool Error:", e.message); }
-
+// Load FlixHQ (Primary)
 try {
     providers['flixhq'] = new MOVIES.FlixHQ();
-    providers['goku'] = new MOVIES.Goku();
-    providers['sflix'] = new MOVIES.SFlix();
-} catch (e) {}
+    console.log("✅ Loaded: FlixHQ");
+} catch (e) {
+    console.log("❌ Error loading FlixHQ:", e.message);
+}
 
+// Load Backups (Just in case)
+try { providers['sflix'] = new MOVIES.SFlix(); } catch (e) {}
+try { providers['goku'] = new MOVIES.Goku(); } catch (e) {}
 
-app.get('/', (req, res) => {
-    res.json({
-        message: "Nika API Online (DramaCool Patched) 🟢",
-        active: Object.keys(providers),
-        url: "https://nika-server-1.onrender.com"
-    });
-});
 
 // --- 2. ROUTES ---
 
+// Health Check
+app.get('/', (req, res) => {
+    res.json({
+        message: "Nika Backend is Online 🟢",
+        active_providers: Object.keys(providers),
+        server_time: new Date().toISOString()
+    });
+});
+
+// Search Route
 app.get('/:source/search/:query', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
-        if (!providers[source]) throw new Error("Invalid Provider");
+        if (!providers[source]) throw new Error("Provider not active");
         const results = await providers[source].search(req.params.query);
         res.json(results);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Info Route
 app.get('/:source/info/:id', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
@@ -54,6 +54,7 @@ app.get('/:source/info/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Watch Route (Extract Video)
 app.get('/:source/watch/:episodeId', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
