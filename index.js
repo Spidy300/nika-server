@@ -1,34 +1,45 @@
 const express = require('express');
 const cors = require('cors');
-const { ANIME, MOVIES } = require('@consumet/extensions');
+const { MOVIES } = require('@consumet/extensions'); // We only import MOVIES now
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-const gogoanime = new ANIME.Gogoanime();
+// Initialize ONLY Dramacool (Since Gogoanime was crashing)
 const dramacool = new MOVIES.Dramacool();
 
-app.get('/', (req, res) => res.json({ message: "Nika API Online", routes: ["/anime/search", "/drama/search"] }));
+app.get('/', (req, res) => {
+    res.json({ 
+        message: "Nika Drama API is Online 🟢", 
+        url: "https://nika-server-z6f8.onrender.com" 
+    });
+});
 
-// ANIME
-app.get('/anime/search/:query', async (req, res) => res.json(await gogoanime.search(req.params.query)));
-app.get('/anime/info/:id', async (req, res) => res.json(await gogoanime.fetchAnimeInfo(req.params.id)));
-app.get('/anime/watch/:episodeId', async (req, res) => res.json(await gogoanime.fetchEpisodeSources(req.params.episodeId)));
+// --- DRAMA ROUTES (Dramacool) ---
 
-// DRAMA (The Missing Part)
 app.get('/drama/search/:query', async (req, res) => {
-    try { res.json(await dramacool.search(req.params.query)); } 
-    catch (err) { res.status(500).json({ error: "Search failed" }); }
-});
-app.get('/drama/info/:id', async (req, res) => {
-    try { res.json(await dramacool.fetchMediaInfo(req.params.id)); } 
-    catch (err) { res.status(500).json({ error: "Info failed" }); }
-});
-app.get('/drama/watch/:episodeId', async (req, res) => {
-    try { res.json(await dramacool.fetchEpisodeSources(req.params.episodeId)); } 
-    catch (err) { res.status(500).json({ error: "Watch failed" }); }
+    try {
+        const results = await dramacool.search(req.params.query);
+        res.json(results);
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.get('/drama/info/:id', async (req, res) => {
+    try {
+        const info = await dramacool.fetchMediaInfo(req.params.id);
+        res.json(info);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/drama/watch/:episodeId', async (req, res) => {
+    try {
+        const sources = await dramacool.fetchEpisodeSources(req.params.episodeId);
+        res.json(sources);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
