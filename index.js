@@ -7,52 +7,44 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-// --- 1. SAFE PROVIDER LOADER ---
+// --- 1. PROVIDER SETUP ---
 const providers = {};
 
-function loadProvider(name, providerClass) {
-    try {
-        if (providerClass) {
-            providers[name] = new providerClass();
-            console.log(`✅ Loaded: ${name}`);
-        } else {
-            console.log(`⚠️ Skipped: ${name} (Not found in library)`);
-        }
-    } catch (e) {
-        console.log(`❌ Failed to load: ${name} - ${e.message}`);
-    }
-}
+try {
+    // FORCE-FIX: We manually set the domain to one that works
+    const dramacool = new MOVIES.DramaCool();
+    // This overrides the old broken link in the library
+    dramacool.baseUrl = "https://asianc.sh"; 
+    providers['dramacool'] = dramacool;
+    console.log("✅ Loaded: DramaCool (Patched)");
+} catch (e) { console.log("❌ DramaCool Error:", e.message); }
 
-// Load the known working ones
-loadProvider('flixhq', MOVIES.FlixHQ);
-loadProvider('dramacool', MOVIES.DramaCool); // Capital 'C' based on your server
-loadProvider('goku', MOVIES.Goku);
-loadProvider('sflix', MOVIES.SFlix);
-loadProvider('himovies', MOVIES.HiMovies); // Adding HiMovies as it is stable
-// We removed ViewAsian because it was crashing the server
+try {
+    providers['flixhq'] = new MOVIES.FlixHQ();
+    providers['goku'] = new MOVIES.Goku();
+    providers['sflix'] = new MOVIES.SFlix();
+} catch (e) {}
 
-// --- 2. HOME ROUTE ---
+
 app.get('/', (req, res) => {
     res.json({
-        message: "Nika Universal API is Online 🟢",
-        active_providers: Object.keys(providers),
+        message: "Nika API Online (DramaCool Patched) 🟢",
+        active: Object.keys(providers),
         url: "https://nika-server-1.onrender.com"
     });
 });
 
-// --- 3. UNIVERSAL ROUTES ---
+// --- 2. ROUTES ---
 
-// Search
 app.get('/:source/search/:query', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
-        if (!providers[source]) throw new Error("Invalid or Inactive Provider");
+        if (!providers[source]) throw new Error("Invalid Provider");
         const results = await providers[source].search(req.params.query);
         res.json(results);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Info
 app.get('/:source/info/:id', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
@@ -62,7 +54,6 @@ app.get('/:source/info/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Watch
 app.get('/:source/watch/:episodeId', async (req, res) => {
     const source = req.params.source.toLowerCase();
     try {
