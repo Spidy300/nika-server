@@ -7,47 +7,37 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 
-// Initialize ViewAsian (The working provider for K-Drama/Asian Drama)
-const viewAsian = new MOVIES.ViewAsian(); 
+// Use FlixHQ (Very stable, includes Movies + TV Shows + Dramas)
+const flixhq = new MOVIES.FlixHQ(); 
 
 app.get('/', (req, res) => {
     res.json({ 
-        message: "Nika Drama API is Online 🟢", 
+        message: "Nika API is Online (Powered by FlixHQ) 🟢", 
         url: "https://nika-server-z6f8.onrender.com" 
     });
 });
 
-// --- DRAMA ROUTES (Using ViewAsian) ---
+// --- ROUTES ---
 
 app.get('/drama/search/:query', async (req, res) => {
     try {
-        // ViewAsian search
-        const results = await viewAsian.search(req.params.query);
+        const results = await flixhq.search(req.params.query);
         res.json(results);
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: err.message }); 
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/drama/info/:id', async (req, res) => {
     try {
-        const info = await viewAsian.fetchMediaInfo(req.params.id);
+        const info = await flixhq.fetchMediaInfo(req.params.id);
         res.json(info);
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: err.message }); 
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/drama/watch/:episodeId', async (req, res) => {
     try {
-        const sources = await viewAsian.fetchEpisodeSources(req.params.episodeId);
+        const sources = await flixhq.fetchEpisodeSources(req.params.episodeId);
         res.json(sources);
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: err.message }); 
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.listen(port, () => {
